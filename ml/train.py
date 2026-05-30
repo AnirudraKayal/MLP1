@@ -8,19 +8,15 @@ from tqdm import tqdm
 
 def main():
     print("Downloading dataset...")
-    # Download the dataset using kagglehub
     path = kagglehub.dataset_download("masoudnickparvar/brain-tumor-mri-dataset")
     print(f"Dataset downloaded to: {path}")
 
-    # Set up device for Mac (MPS) or CPU
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    # The dataset usually contains 'Training' and 'Testing' folders
     train_dir = os.path.join(path, 'Training')
     test_dir = os.path.join(path, 'Testing')
 
-    # Data Augmentation and Normalization
     data_transforms = {
         'train': transforms.Compose([
             transforms.Resize((224, 224)),
@@ -51,25 +47,20 @@ def main():
     class_names = image_datasets['train'].classes
     print(f"Classes: {class_names}")
 
-    # Load pre-trained ResNet18
     model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
     
-    # Fine-tune ALL layers (do not freeze)
     for param in model.parameters():
         param.requires_grad = True
 
-    # Replace the final layer to match our classes
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, len(class_names))
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    # Optimize all parameters with a smaller learning rate for fine-tuning
     optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
-    # Add learning rate scheduler
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 
-    num_epochs = 15 # Increased for higher accuracy
+    num_epochs = 15
 
     print("Starting training...")
     for epoch in range(num_epochs):
@@ -85,7 +76,6 @@ def main():
             running_loss = 0.0
             running_corrects = 0
 
-            # Iterate over data
             for inputs, labels in tqdm(dataloaders[phase], desc=phase):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
@@ -113,10 +103,8 @@ def main():
                 scheduler.step()
 
     print("Training complete. Saving model...")
-    # Save the model state dictionary
     torch.save(model.state_dict(), 'model.pth')
     
-    # Also save class names for inference
     with open("class_names.txt", "w") as f:
         f.write(",".join(class_names))
         
