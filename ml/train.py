@@ -54,9 +54,9 @@ def main():
     # Load pre-trained ResNet18
     model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
     
-    # Freeze layers (optional, but good for fine-tuning)
+    # Fine-tune ALL layers (do not freeze)
     for param in model.parameters():
-        param.requires_grad = False
+        param.requires_grad = True
 
     # Replace the final layer to match our classes
     num_ftrs = model.fc.in_features
@@ -64,10 +64,12 @@ def main():
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    # Optimize only the final layer
-    optimizer = optim.Adam(model.fc.parameters(), lr=0.001)
+    # Optimize all parameters with a smaller learning rate for fine-tuning
+    optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
+    # Add learning rate scheduler
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 
-    num_epochs = 3 # Keep it low for fast training on Mac during demo
+    num_epochs = 15 # Increased for higher accuracy
 
     print("Starting training...")
     for epoch in range(num_epochs):
@@ -106,6 +108,9 @@ def main():
             epoch_acc = running_corrects.float() / dataset_sizes[phase]
 
             print(f"{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}")
+            
+            if phase == 'train':
+                scheduler.step()
 
     print("Training complete. Saving model...")
     # Save the model state dictionary
