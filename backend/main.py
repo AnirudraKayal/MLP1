@@ -79,12 +79,16 @@ async def predict(file: UploadFile = File(...)):
             probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
             confidence, preds = torch.max(probabilities, 0)
             
+            # Get all class probabilities
+            all_probs = {class_names[i]: round(prob.item() * 100, 2) for i, prob in enumerate(probabilities)}
+            
         predicted_class = class_names[preds.item()]
         confidence_score = confidence.item()
         
         return {
             "prediction": predicted_class,
-            "confidence": round(confidence_score * 100, 2)
+            "confidence": round(confidence_score * 100, 2),
+            "all_probabilities": all_probs
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
