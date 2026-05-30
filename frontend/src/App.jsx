@@ -123,10 +123,6 @@ function App() {
             <span className="meta-label">System Status</span>
             <span className="meta-value" style={{color: 'var(--success-color)'}}>Online (v2.1)</span>
           </div>
-          <div className="meta-item">
-            <span className="meta-label">AI Model</span>
-            <span className="meta-value">ResNet-18 Deep Vision</span>
-          </div>
         </div>
       </header>
 
